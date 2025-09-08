@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>My Love</title>
+<style>
+body { font-family: Arial, sans-serif; margin:0; background:#f8eef5; text-align:center; overflow-x:hidden; }
+h1 { margin:21px 0 8px; color:#d81b60; font-size:2.4rem; margin-bottom: 80px;}
+span { font-size:5.2rem; color:rgb(230, 48, 48);}
+.colors { display:flex; gap:16px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+.color-box { width: 137px; height:110px; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; cursor:pointer; box-shadow:0 6px 14px rgba(0,0,0,.12); flex-direction: column;}
+.gallery { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); width:92%; margin:0 auto 40px; }
+.gallery-item { width:180px; height:180px; border-radius:12px; overflow:hidden; display:inline-block; cursor:pointer; margin:auto; background:#eee; }
+.gallery-item img, .gallery-item video { width:100%; height:100%; object-fit:cover; display:block; }
+#fullscreenOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:9999; align-items:center; justify-content:center; }
+#fsImage, #fsVideo { max-width:92%; max-height:92%; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.5); }
+
+#notification { position: fixed; top: 20px; left: 20px; background: white; border-radius: 12px; padding: 10px 20px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); cursor: pointer; z-index: 1000; display:none; }
+#notification .envelope { font-size: 28px; }
+#notification .text { font-weight: bold; color: #d63384; }
+
+#letter { position: fixed; bottom: 50px; left: 50%; font-size: 40px; z-index: 1000; display:none; animation: fly 5s forwards; }
+@keyframes fly { 0% {bottom:50px; left:40px; transform: rotate(0deg);} 50% {bottom:60%; left:50%; transform: rotate(360deg);} 100% {bottom:40%; left:50%; transform: rotate(0deg);} }
+
+#videoWrapper { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; display:none; }
+#loveVideo { border: 4px solid #d63384; border-radius: 12px; width: 400px; height:370px; }
+#loveText { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; color: pink; font-weight: bold; opacity:0; transition: opacity 0.5s; z-index:1001; }
+
+#balloons { position: fixed; top: 0; left:0; right:0; bottom:0; display: flex; justify-content:center; align-items:center; gap: 60px; z-index:1000; display:none; }
+.balloon { font-size: 70px; cursor: pointer; animation: float 3s ease-in-out infinite alternate; }
+@keyframes float { 0% {transform: translateY(0);} 100% {transform: translateY(-30px);} }
+
+
+#words { position: fixed; top: 15%; left: 50%; transform: translateX(-50%); font-size: 83px; font-weight: bold; color: #d63384; display: flex; gap: 20px; z-index:1001; background-color: black; }
+
+.flower { position: fixed; width: 30px; height: 30px; background: url('cartoon/flower.png') no-repeat center/contain; top:-50px; pointer-events:none; animation: fall 3s linear forwards; }
+@keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity:0; } }
+
+#loveScroll { position: fixed; width: 350px; height: 500px; background: #fff8dc; border: 3px solid #c19a6b; display:none; border-radius: 10px; overflow:hidden; text-align: center; font-size: 18px; padding: 20px; cursor: pointer; transform: rotateX(90deg); transform-origin: top; transition: transform 1s ease; z-index:1002; }
+#scrollContent { display:none; margin-top:20px; }
+#scrollButtons { display:none; margin-top: 20px; justify-content: center;}
+#scrollButtons button { padding: 10px 20px; margin: 0 10px; font-size: 16px; border: none; border-radius: 5px; cursor:pointer; }
+@keyframes burn { 0% {opacity:1; transform: scale(1);} 100% {opacity:0; transform: scale(0) rotate(90deg);} }
+</style>
+</head>
+<body>
+<img src="cartoon/baby.gif" alt="">
+<h1><span>My Love</span><br> Choose the Princess Below</h1>
+
+<div class="colors">
+  <div class="color-box" style="background:#ef5350" data-folder="red">
+    <img src="cartoon/ariel.png" height="50px" width="50px">Ariel
+  </div>
+  <div class="color-box" style="background:#42a5f5" data-folder="blue">
+    <img src="cartoon/cindrella.png" height="50px" width="50px">Cindrella
+  </div>
+  <div class="color-box" style="background:#66bb6a" data-folder="green">
+    <img src="cartoon/Tiana.png" height="50px" width="50px">Tiana
+  </div>
+  <div class="color-box" style="background:black" data-folder="black">
+    <img src="cartoon/maleficent.png" height="50px" width="50px">Maleficent
+  </div>
+  <div class="color-box" style="background:pink; color:#222" data-folder="pink">
+    <img src="cartoon/rapunzel.png" height="50px" width="50px">Rapunzel
+  </div>
+  <div class="color-box" style="background:white; color:#222" data-folder="white">
+    <img src="cartoon/frozen.png" height="50px" width="50px">Frozen
+  </div>
+</div>
+
+<div class="gallery" id="gallery"></div>
+
+<div id="fullscreenOverlay" role="dialog" aria-hidden="true">
+  <img id="fsImage" alt="" style="display:none;">
+  <video id="fsVideo" style="display:none;" controls playsinline></video>
+</div>
+
+<!-- Notification and Letter -->
+<div id="notification"><div class="envelope">💌</div><div class="text">You got a Love Letter</div></div>
+<div id="letter">💜✈️</div>
+
+<!-- Video & I Love You text -->
+<div id="videoWrapper">
+  <div id="loveText"></div>
+  <video id="loveVideo" controls>
+    <source src="1.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- Balloons -->
+<div id="balloons">
+  <div class="balloon" data-word="I">🎈</div>
+  <div class="balloon" data-word="Love">🎈</div>
+  <div class="balloon" data-word="You">🎈</div>
+</div>
+
+<div id="words"></div>
+
+<!-- Scroll -->
+<div id="loveScroll" aria-placeholder="Love Letter">
+	<h1 style="font-size: 20px;">💌My Love Letter💌</h1>
+  <div id="scrollContent">
+  <p>
+    From the moment I met you, my world changed. Every smile of yours 
+    lights up my darkest days, and every word you speak stays in my heart. 
+    I can’t imagine a future without you by my side. 
+    You’re not just someone I love—you’re my everything.
+  </p>
+  <p>
+    I promise to cherish you, support you, and make you laugh every day. 
+    All I ask is that you let me be the one to make you happiest in this life.
+  </p>
+  </div>
+  <div id="scrollButtons">
+    <a href="index.html"><button id="acceptBtn" style="background:pink;">Accept</button></a>
+    <a href="index.html"><button id="declineBtn" style="background:lightgray;">Decline</button></a>
+  </div>
+</div>
+
+<script>
+// Gallery functionality
+const colorFiles = {
+  red:   ['  (1).png', '  (2).png',  '  (3).png',  '  (4).png',  '  (5).png',  '  (6).png',  '  (7).png',  '  (8).png',  '  (9).png',  '  (10).png',  '  (11).png',  '  (12).png',  '  (13).png',  '  (14).png',  '  (15).png',  '  (16).png',  '  (17).png',  '  (18).png',  '  (19).png',  '  (20).png',  '  (21).png',  '  (22).png',  '  (23).png',  '  (24).png',  '  (25).png',  '  (26).png',  '  (27).png',  '  (28).png', '(29).png', ' (1).mp4', ' (2).mp4', ' (3).mp4', ' (4).mp4', ' (5).mp4', ' (6).mp4', ' (7).mp4', ' (8).mp4', ' (9).mp4', ' (10).mp4', ' (11).mp4', ' (12).mp4', ' (13).mp4', ' (14).mp4', ' (15).mp4', ' (16).mp4', ' (17).mp4', ' (18).mp4'],
+
+
+  blue:  [' (1).png', ' (2).png',  ' (3).png',  ' (4).png',  ' (5).png',  ' (6).png',  ' (7).png',  ' (8).png',  ' (9).png',  ' (10).png',  ' (11).png',  ' (12).png',  ' (13).png',  ' (14).png',  ' (15).png',  ' (16).png' ,' (17).png',  ' (18).png',  ' (19).png',  ' (20).png',  ' (21).png',  ' (22).png',  ' (23).png',  ' (24).png',  ' (25).png',  ' (26).png',  ' (27).png',  ' (28).png', '1.mp4'],
+
+
+  green: [' (1).png', ' (2).png',  ' (3).png',  ' (4).png',  ' (5).png',  ' (6).png',  ' (7).png',  ' (8).png',  ' (9).png',  ' (10).png', '1.mp4', '2.mp4', '3.mp4', '4.mp4', '5.mp4'],
+
+
+  black: ['1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png','10.png','11.png','12.png','13.png','14.png','15.png','16.png' ,'1.mp4','2.mp4','3.mp4','4.mp4','5.mp4','6.mp4','7.mp4','8.mp4','9.mp4','10.mp4','11.mp4',],
+
+
+  pink:['1.png', '1.mp4', '2.mp4', '3.mp4', '4.mp4',],
+
+
+  white:[' (1).png', ' (2).png',  ' (3).png',  ' (4).png',  ' (5).png',  ' (6).png',  ' (7).png',  ' (8).png',  ' (9).png',  ' (10).png',  ' (11).png',  ' (12).png',  ' (13).png',  ' (14).png',  ' (15).png',  ' (16).png' ,' (17).png',  ' (18).png',  ' (19).png',  ' (20).png',  ' (21).png',  ' (22).png',  ' (23).png',  ' (24).png',  ' (25).png',  ' (26).png',  ' (27).png',  ' (28).png', ' (29).png', ' (30).png', ' (31).png', ' (1).mp4', ' (2).mp4', ' (3).mp4', ' (4).mp4', ' (5).mp4', ' (6).mp4', ' (7).mp4', ' (8).mp4', ' (9).mp4', ' (10).mp4', ' (11).mp4', ' (12).mp4', ' (13).mp4', ' (14).mp4']
+
+};
+const gallery = document.getElementById('gallery');
+const colorBoxes = document.querySelectorAll('.color-box');
+const overlay = document.getElementById('fullscreenOverlay');
+const fsImage = document.getElementById('fsImage');
+const fsVideo = document.getElementById('fsVideo');
+
+function loadMedia(folder){
+  gallery.innerHTML='';
+  const files = colorFiles[folder] || [];
+  files.forEach(file=>{
+    const ext = file.split('.').pop().toLowerCase();
+    const path = `${folder}/${file}`;
+    const wrapper = document.createElement('div');
+    wrapper.className='gallery-item';
+    wrapper.dataset.src=path;
+    wrapper.dataset.ext=ext;
+    if(ext==='mp4'||ext==='webm'){ const vid=document.createElement('video'); vid.src=path; vid.autoplay=true; vid.muted=true; vid.loop=true; vid.playsInline=true; wrapper.appendChild(vid);}
+    else{ const img=document.createElement('img'); img.src=path; wrapper.appendChild(img);}
+    gallery.appendChild(wrapper);
+  });
+}
+
+colorBoxes.forEach(box=>{ box.addEventListener('click',()=>{ loadMedia(box.dataset.folder); }); });
+
+gallery.addEventListener('click', e=>{
+  const item = e.target.closest('.gallery-item');
+  if(!item) return;
+  const src=item.dataset.src; const ext=item.dataset.ext;
+  fsImage.style.display='none'; fsVideo.style.display='none'; fsVideo.pause(); fsVideo.src='';
+  if(ext==='mp4'||ext==='webm'){ fsVideo.src=src; fsVideo.muted=false; fsVideo.controls=true; fsVideo.style.display='block'; fsVideo.play().catch(()=>{}); }
+  else{ fsImage.src=src; fsImage.style.display='block'; }
+  overlay.style.display='flex';
+});
+overlay.addEventListener('click', e=>{ if(e.target!==overlay) return; overlay.style.display='none'; fsVideo.pause(); fsVideo.src=''; });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ overlay.style.display='none'; fsVideo.pause(); fsVideo.src=''; } });
+
+// Love Letter Sequence
+const notification = document.getElementById('notification');
+const letter = document.getElementById('letter');
+const videoWrapper = document.getElementById('videoWrapper');
+const loveVideo = document.getElementById('loveVideo');
+const balloons = document.getElementById('balloons');
+const words = document.getElementById('words');
+const loveText = document.getElementById('loveText');
+const loveScroll = document.getElementById('loveScroll');
+const scrollContent = document.getElementById('scrollContent');
+const scrollButtons = document.getElementById('scrollButtons');
+const acceptBtn = document.getElementById('acceptBtn');
+const declineBtn = document.getElementById('declineBtn');
+
+setTimeout(()=>{ notification.style.display='flex'; },10000);
+
+notification.addEventListener('click', ()=>{
+  notification.style.display='none';
+  letter.style.display='block';
+  setTimeout(()=>{
+    letter.style.display='none';
+    videoWrapper.style.display='block';
+    loveVideo.autoplay=true; loveVideo.play();
+    loveText.style.opacity=1;
+  },3000);
+});
+
+loveVideo.addEventListener('ended', ()=>{
+  videoWrapper.style.display='none';
+  balloons.style.display='flex';
+});
+
+let poppedCount=0;
+document.querySelectorAll('.balloon').forEach(balloon=>{
+  balloon.addEventListener('click', ()=>{
+    balloon.style.display='none';
+    const word=balloon.dataset.word;
+    const span=document.createElement('div');
+    span.textContent=word;
+    words.appendChild(span);
+    poppedCount++;
+    document.body.classList.add('blur-bg');
+    if(poppedCount===3){ setTimeout(()=>{ document.body.classList.remove('blur-bg'); showScroll(); },1000);}
+  });
+});
+
+function showScroll(){
+  loveText.style.opacity=0; // hide "I Love You" text
+  loveScroll.style.display='block';
+  loveScroll.style.top='10%';
+  loveScroll.style.left='50%';
+  loveScroll.style.transform='translateX(-50%) rotateX(0deg)';
+
+  // falling flowers
+  for(let i=0;i<20;i++){
+    const flower=document.createElement('div');
+    flower.className='flower';
+    flower.style.left=Math.random()*100+'vw';
+    document.body.appendChild(flower);
+    setTimeout(()=>flower.remove(),3000);
+  }
+}
+
+loveScroll.addEventListener('click', ()=>{
+  scrollContent.style.display='block';
+  scrollButtons.style.display='flex';
+});
+
+acceptBtn.addEventListener('click', ()=>{
+  const phoneNumber='8801873881976';
+  const message=encodeURIComponent('I love you too ❤️');
+  window.open(`https://wa.me/${phoneNumber}?text=${message}`,'_blank');
+});
+
+declineBtn.addEventListener('click', ()=>{
+  scrollContent.style.display='none'; scrollButtons.style.display='none';
+  loveScroll.style.animation='burn 2s forwards';
+  setTimeout(()=>{ loveScroll.style.display='none'; loveScroll.style.transform='rotateX(90deg)'; },2000);
+});
+</script>
+</body>
+</html>
